@@ -7,3 +7,4 @@ upx.exe
 build/
 dist/
 __pycache__/
+main.lnk
