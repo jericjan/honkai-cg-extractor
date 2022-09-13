@@ -68,7 +68,9 @@ def main():
             mkv_file = f"{just_name}.mkv"
             mp4_file = f"{just_name}.mp4"
             if with_audio:            
-                run_sub(["ffmpeg", "-i", vid_file, "-i", aud_file, "-map","0:v:0","-map","1:a:0","-y",mkv_file]) 
+                run_sub(["ffmpeg", "-i", aud_file, "-y", "temp.ogg"])
+                run_sub(["ffmpeg", "-i", vid_file, "-i", "temp.ogg", "-map","0:v:0","-map","1:a:0","-y","-c","copy",mp4_file]) 
+                os.remove("temp.ogg")
             else:            
                 run_sub(["ffmpeg", "-i", vid_file, "-c","copy","-y",mp4_file])   
             os.remove(vid_file)
