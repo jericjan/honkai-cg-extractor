@@ -60,5 +60,6 @@ if opened_files:
         os.remove("opened_files.txt")
         print("Done!")
         print(f'Check your "{dest_path}" folder for the CGs')
+        input()
 else:
     print("There are no opened .usm files. Exiting...")

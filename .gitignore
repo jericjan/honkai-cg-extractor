@@ -3,3 +3,7 @@ OpenedFilesView/
 UsmDemuxer/
 venv.lnk
 venv/
+upx.exe
+build/
+dist/
+__pycache__/
