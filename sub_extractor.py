@@ -2,6 +2,9 @@ import re
 import codecs
 import os
 
+class NoSubsFound(Exception):
+    pass
+
 class Line():
     def __init__(self, hex_str,ascii_str,lang=None, start=None, duration=None):
         self.hex_str = hex_str
@@ -64,6 +67,8 @@ def extract_sub(file):
                 master_regged.append(regged[0])
             
     lines_list = []
+    if len(master_regged) == 0:
+        raise NoSubsFound("No subtitles were found. This CG may not have any subtitles.")
     for x in master_regged:
         x = x.replace(" ","")
         split_at = 96

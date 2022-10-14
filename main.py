@@ -4,7 +4,7 @@ import os
 from shlex import join as shlexjoin
 import glob
 import argparse
-from sub_extractor import extract_sub
+from sub_extractor import extract_sub, NoSubsFound
 parser = argparse.ArgumentParser()
 parser.add_argument('files', metavar='FILES', type=str, nargs='*', default='none',
                     help='.usm files to be converted')
@@ -62,7 +62,10 @@ def main():
             run_sub([demuxer_path,usm_file])
             print(f"Demux done.")
             if with_subs:
-                extract_sub(usm_file)
+                try:
+                    extract_sub(usm_file)
+                except NoSubsFound as e:
+                    print(e)
             os.remove(usm_file)        
             vid_file = glob.glob(f"{just_name}*.m2v")[0]
             audio_file_exists = True
