@@ -12,3 +12,17 @@ You don't need to download these since I will include them in the release packag
 ## How To Use:  
 Simply run it, tell it if you want audio or not, and you will have your video files in the CGs subfolder :D
 
+### CLI Usage
+```
+usage: HonkaiCGExtractor [-h] [-a] [-s] [-na] [-ns] [FILES ...]
+
+positional arguments:
+  FILES            .usm files to be converted. will detect any currently playing CGs if not specified
+
+optional arguments:
+  -h, --help       show this help message and exit
+  -a, --audio      will extract audio without asking
+  -s, --subs       will extract subtitles without asking
+  -na, --no-audio  will skip audio extraction without asking
+  -ns, --no-subs   will skip subtitles extraction without asking
+```

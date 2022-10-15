@@ -14,7 +14,7 @@ parser.add_argument(
     type=str,
     nargs="*",
     default="none",
-    help=".usm files to be converted",
+    help=".usm files to be converted. will detect any currently playing CGs if not specified",
 )
 parser.add_argument(
     "-a",
