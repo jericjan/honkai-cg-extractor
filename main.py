@@ -2,10 +2,10 @@
 
 from subprocess import Popen, PIPE
 import shutil
-import os
-import glob
 import argparse
+from pathlib import Path, PurePath
 from sub_extractor import extract_sub, NoSubsFound
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -60,7 +60,7 @@ elif args["no_subs"]:
     WITH_SUBS = False
 
 flags = [
-    args[x] for x in ["audio", "no_audio", "subs", "no_subs"] if args[x] is not None
+    args[x] for x in ("audio", "no_audio", "subs", "no_subs") if args[x] is not None
 ]
 if any(flags):
     print("Flags provided")
@@ -76,11 +76,6 @@ def run_sub(coms):
             print(stderr.decode("utf-8"))
 
 
-def get_full_path(rel_path):
-    "returns the full path of a relative path"
-    return os.path.join(os.getcwd(), rel_path)
-
-
 def ask_yes_no(question):
     "asks the user a yes or no question"
     while True:
@@ -94,16 +89,14 @@ def ask_yes_no(question):
 
 def main(with_audio, with_subs):
     "the main function"
-    if not os.path.exists("CGs/"):
-        os.mkdir("CGs")
+    Path("CGs").mkdir(exist_ok=True)
     if args["files"] != "none":
         opened_files = args["files"]
         print(f"{len(opened_files)} CGs provided")
     else:
-        ofw_path = get_full_path("OpenedFilesView\\OpenedFilesView.exe")
+        ofw_path = Path("OpenedFilesView\\OpenedFilesView.exe").absolute()
         run_sub([ofw_path, "/scomma", "opened_files.txt", "/wildcardfilter", "*.usm"])
-        with open("opened_files.txt", encoding="utf-8") as f:
-            opened_files = f.read()
+        opened_files = Path("opened_files.txt").read_text(encoding="utf-8")
         opened_files = opened_files.split("\n")
         opened_files = [x for x in opened_files if x]
         opened_files = [file.split(",")[1] for file in opened_files]
@@ -116,28 +109,26 @@ def main(with_audio, with_subs):
             with_subs = ask_yes_no("Do you want to also export the subtitles?")
         file_paths = opened_files
         for file in file_paths:
-            dest_path = os.path.join(os.getcwd(), "CGs\\")
+            dest_path = Path.cwd() / "CGs"
             shutil.copy(file, dest_path)
-            usm_file = os.path.join(dest_path, os.path.basename(file))
-            just_name = os.path.splitext(usm_file)[0]
-            print(f"Demuxing {os.path.basename(file)}")
-            demuxer_path = get_full_path("UsmDemuxer/UsmDemuxer.exe")
+            usm_file = dest_path / PurePath(file).name
+            print(f"Demuxing {usm_file.name}")
+            demuxer_path = Path("UsmDemuxer/UsmDemuxer.exe").resolve()
             run_sub([demuxer_path, usm_file])
             print("Demux done.")
             if with_subs:
                 try:
                     extract_sub(usm_file)
-                except NoSubsFound as e:
+                except (NoSubsFound, StartEndError) as e:
                     print(e)
-            os.remove(usm_file)
-            vid_file = glob.glob(f"{just_name}*.m2v")[0]
-            audio_file_exists = True
+            usm_file.unlink(missing_ok=True)
+            just_name = usm_file.stem
+            vid_file = next(dest_path.glob(f"{just_name}*.m2v"))
             try:
-                aud_file = glob.glob(f"{just_name}*.hca")[0]
-            except IndexError:
+                aud_file = next(dest_path.glob(f"{just_name}*.hca"))
+            except StopIteration:
                 print("No audio file found.")
-                audio_file_exists = False
-            mp4_file = f"{just_name}.mp4"
+            mp4_file = usm_file.with_suffix(".mp4").absolute()
             if with_audio:
                 print("Converting audio to AAC...")
                 run_sub(["ffmpeg", "-i", aud_file, "-y", "temp.aac"])
@@ -159,15 +150,13 @@ def main(with_audio, with_subs):
                         mp4_file,
                     ]
                 )
-                os.remove("temp.aac")
+                Path("temp.aac").unlink(missing_ok=True)
             else:
                 print("Losslessly converting to MP4")
                 run_sub(["ffmpeg", "-i", vid_file, "-c", "copy", "-y", mp4_file])
-            os.remove(vid_file)
-            if audio_file_exists:
-                os.remove(aud_file)
-            if os.path.exists("opened_files.txt"):
-                os.remove("opened_files.txt")
+            vid_file.unlink(missing_ok=True)
+            aud_file.unlink(missing_ok=True)
+            Path("opened_files.txt").unlink(missing_ok=True)
         print("Done!")
         print(f'Check your "{dest_path}" folder for the CGs')
         input()
